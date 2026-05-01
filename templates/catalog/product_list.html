@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Товары | Zeekr{% endblock %}
+{% block body_section %}home{% endblock %}
+{% block eyebrow %}Каталог товаров{% endblock %}
+{% block page_heading %}Проверка товаров и кеш результатов{% endblock %}
+{% block content %}
+<section class="page active">
+    <div class="panel">
+        <div class="panel__head">
+            <h2>Товары</h2>
+            <a class="btn btn--secondary btn--sm" href="{% url 'catalog:ocr_upload' %}">Проверка по фото</a>
+        </div>
+        <form method="get" class="search-form page-search">
+            <label for="product-query">Искать товар</label>
+            <div class="search-row">
+                <input id="product-query" type="search" name="query" value="{{ request.GET.query }}" placeholder="Kinder Bueno, Coca Cola Vanilla">
+                <button class="btn btn--primary" type="submit">Найти</button>
+            </div>
+            <div class="analysis-grid search-filter-grid">
+                <div class="field-stack">{{ form.status.label_tag }}{{ form.status }}</div>
+                <div class="field-stack">{{ form.country.label_tag }}{{ form.country }}</div>
+                <div class="field-stack">{{ form.brand.label_tag }}{{ form.brand }}</div>
+            </div>
+        </form>
+        <div class="activity-list">
+            {% for product in products %}
+                <a class="activity-item" href="{{ product.get_absolute_url }}">
+                    <div>
+                        <strong>{{ product.name }}</strong>
+                        <span>{% if product.brand %}{{ product.brand.name }}{% endif %} {% if product.country %}· {{ product.country }}{% endif %}</span>
+                    </div>
+                    <span>{{ product.get_halal_status_display }}</span>
+                </a>
+            {% empty %}
+                <div class="empty-state">
+                    <div class="empty-state__visual"></div>
+                    <h2>Товары не найдены</h2>
+                    <p>Попробуйте другой запрос или дождитесь импорта из внешнего источника.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

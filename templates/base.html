@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1D9E75">
+    <title>{% block title %}Zeekr{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'zeekr/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'zeekr/css/responsive.css' %}">
+</head>
+<body data-section="{% block body_section %}home{% endblock %}">
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <a class="brand" href="{% url 'core:home' %}" aria-label="Zeekr">
+                <span class="brand__mark">✦</span>
+                <span>
+                    <strong>Zeekr</strong>
+                    <small>проверка без догадок</small>
+                </span>
+            </a>
+
+            <nav class="nav" aria-label="Основная навигация">
+                <a class="nav__link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:home' %}">
+                    <span class="nav__icon">⌕</span>
+                    <span>Проверка</span>
+                </a>
+                <a class="nav__link {% if '/brands/' in request.path and '/boycott/' not in request.path %}active{% endif %}" href="{% url 'catalog:brand_list' %}">
+                    <span class="nav__icon">◇</span>
+                    <span>Бренды</span>
+                </a>
+                <a class="nav__link {% if '/boycott/' in request.path %}active{% endif %}" href="{% url 'catalog:boycott_list' %}">
+                    <span class="nav__icon">✕</span>
+                    <span>Бойкот</span>
+                </a>
+            </nav>
+
+            <div class="sidebar__actions">
+                <a class="sidebar__contact-card sidebar__contact-card--email" href="mailto:goodhuman954@gmail.com">
+                    <span class="sidebar__contact-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M4 7.5 11.2 13a1.4 1.4 0 0 0 1.6 0L20 7.5" />
+                            <rect x="3.5" y="5.5" width="17" height="13" rx="3" />
+                        </svg>
+                    </span>
+                    <span class="sidebar__contact-text">support@zeekr.app</span>
+                </a>
+            </div>
+
+            <div class="sidebar__status">
+                <span class="status-dot"></span>
+                <span>{% if request.user.is_authenticated %}Онлайн{% else %}Гостевой режим{% endif %}</span>
+            </div>
+        </aside>
+
+        <main class="workspace">
+            <header class="topbar">
+                <button class="icon-btn mobile-menu" type="button" aria-label="Открыть меню" id="mobileMenuBtn">☰</button>
+                <div>
+                    <p class="eyebrow">{% block eyebrow %}Halal check без лишнего шума{% endblock %}</p>
+                    <h1>{% block page_heading %}Понятная проверка состава, брендов и спорных ингредиентов{% endblock %}</h1>
+                </div>
+            </header>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="panel" style="margin-bottom:16px;">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById("sidebar");
+        const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+        if (mobileMenuBtn && sidebar) {
+            mobileMenuBtn.addEventListener("click", () => sidebar.classList.toggle("open"));
+        }
+    </script>
+</body>
+</html>

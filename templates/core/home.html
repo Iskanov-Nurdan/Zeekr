@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Zeekr Halal Check{% endblock %}
+{% block body_section %}home{% endblock %}
+{% block content %}
+<section class="page active" id="home">
+    <section class="public-greeting panel">
+        <span class="public-greeting__badge">Для магазина, поездки и обычной полки дома</span>
+        <h2>Сначала короткий ответ. Потом — почему.</h2>
+        <p>Введите товар, бренд или ингредиент. Zeekr покажет статус, спорные места и объяснит результат человеческим языком.</p>
+        <div class="trust-strip">
+            <span>Итог без лишних терминов</span>
+            <span>Причина по ингредиентам</span>
+            <span>Отметка по бренду и бойкоту</span>
+        </div>
+        <div class="reading-guide">
+            <article>
+                <strong>Можно</strong>
+                <span>В составе не найдено красных флагов.</span>
+            </article>
+            <article>
+                <strong>Нужно уточнить</strong>
+                <span>Не хватает происхождения или точного источника.</span>
+            </article>
+            <article>
+                <strong>Нельзя</strong>
+                <span>Есть компонент, который лучше исключить.</span>
+            </article>
+        </div>
+    </section>
+
+    <div class="hero-grid" style="margin-top:16px;">
+        <section class="panel panel--main">
+            <div class="tabs" role="tablist" aria-label="Тип проверки">
+                <button class="tabs__tab active" type="button" data-home-mode="product">По названию</button>
+                <button class="tabs__tab" type="button" data-home-mode="photo">По фото</button>
+            </div>
+
+            <div class="check-mode active" data-home-panel="product">
+                <form method="get" class="search-form">
+                    <label for="global-search">Название товара, ингредиента или бренда</label>
+                    <div class="search-row">
+                        <input id="global-search" type="search" name="q" value="{{ query }}" placeholder="Например: Kinder Bueno, Gelatin, Nestle" autocomplete="off">
+                        <button class="btn btn--primary" type="submit">Проверить</button>
+                    </div>
+                    <div class="sample-row">
+                        <a class="sample-chip" href="/?q=Kinder+Bueno">Kinder Bueno</a>
+                        <a class="sample-chip" href="/?q=Gelatin">Gelatin</a>
+                        <a class="sample-chip" href="/?q=Nestle">Nestle</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="check-mode" data-home-panel="photo">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="upload-zone scanner-flow">
+                        <div class="scanner-flow__top">
+                            <button class="scanner-flow__back" type="button" data-home-mode-jump="product">← Отмена</button>
+                            <strong>Распознавание состава</strong>
+                        </div>
+                        <div class="scanner-frame">
+                            <div class="scanner-frame__box"></div>
+                            <div class="scanner-frame__line"></div>
+                        </div>
+                        <strong class="scanner-flow__hint">Наведите камеру на текст состава продукта</strong>
+                        <div class="scanner-flow__info">
+                            AI проанализирует текст через OCR и выдаст результат по каждому ингредиенту.
+                        </div>
+                        <span class="scanner-flow__status">Фото ещё не выбрано</span>
+                        <div class="photo-actions" style="width:100%;">
+                            {{ ocr_form.image }}
+                            <button class="btn btn--primary wide" type="button" id="photoPickButton">Сфотографировать / выбрать фото</button>
+                        </div>
+                    </div>
+                    <div class="ocr-field-group">
+                        <div class="field-stack">{{ ocr_form.title.label_tag }}{{ ocr_form.title }}</div>
+                        <div class="field-stack">{{ ocr_form.country.label_tag }}{{ ocr_form.country }}</div>
+                    </div>
+                    <button class="btn btn--primary wide" type="submit">Разобрать состав</button>
+                </form>
+            </div>
+        </section>
+
+        <aside class="panel stats-panel">
+            <h2>Что учитываем</h2>
+            <div class="metric metric--halal">
+                <span>Чистый состав</span>
+                <strong>95%</strong>
+            </div>
+            <div class="metric metric--doubtful">
+                <span>Неясное происхождение</span>
+                <strong>80%</strong>
+            </div>
+            <div class="metric metric--haram">
+                <span>Запрещенные компоненты</span>
+                <strong>99%</strong>
+            </div>
+            <p>Оценка зависит от состава, источника данных, качества OCR и полноты карточки товара.</p>
+        </aside>
+    </div>
+
+    <section class="result-layout">
+        <div class="panel">
+            {% if query %}
+                <div class="result-card">
+                    <div class="panel__head">
+                        <h2>Результаты по запросу "{{ query }}"</h2>
+                    </div>
+                    {% with item=products|first %}
+                        {% if item %}
+                            <div class="result-top">
+                                <div class="product-thumb">{{ item.name|slice:":1"|upper }}</div>
+                                <div>
+                                    <h2>{{ item.name }}</h2>
+                                    <p>{% if item.brand %}{{ item.brand.name }}{% endif %}{% if item.country %} · {{ item.country }}{% endif %}</p>
+                                </div>
+                                <span class="badge {% if item.halal_status == 'halal' %}badge--halal{% elif item.halal_status == 'haram' %}badge--haram{% else %}badge--doubtful{% endif %}">
+                                    {{ item.get_halal_status_display }}
+                                </span>
+                            </div>
+
+                            <p class="verdict-note {% if item.halal_status == 'halal' %}verdict-note--halal{% elif item.halal_status == 'haram' %}verdict-note--haram{% else %}verdict-note--doubtful{% endif %}">
+                                {{ item.status_reason|default:"Пояснение по статусу пока не сформировано." }}
+                            </p>
+
+                            <div class="analysis-grid">
+                                <div class="analysis-item">
+                                    <span>Уверенность</span>
+                                    <strong>{{ item.confidence_score }}%</strong>
+                                </div>
+                                <div class="analysis-item">
+                                    <span>Источник</span>
+                                    <strong>{{ item.source_name|default:"Zeekr" }}</strong>
+                                </div>
+                                <div class="analysis-item">
+                                    <span>Штрихкод</span>
+                                    <strong>{{ item.barcode|default:"Нет" }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="panel">
+                                <div class="panel__head"><h2>Состав</h2></div>
+                                <p>{{ item.full_ingredients_text|default:"Полный состав пока не загружен." }}</p>
+                            </div>
+
+                            <div class="panel">
+                                <div class="panel__head"><h2>Ингредиенты</h2></div>
+                                <div class="ingredient-list">
+                                    {% for row in item.product_ingredients.all %}
+                                        <div class="ingredient-row">
+                                            <div>
+                                                <strong>{{ row.raw_name|default:row.ingredient.name }}</strong>
+                                                <span>{{ row.notes }}</span>
+                                            </div>
+                                            <span class="badge {% if row.status_at_analysis == 'halal' %}badge--halal{% elif row.status_at_analysis == 'haram' %}badge--haram{% else %}badge--doubtful{% endif %}">
+                                                {{ row.get_status_at_analysis_display }}
+                                            </span>
+                                        </div>
+                                    {% empty %}
+                                        <p>Ингредиенты ещё не разобраны.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                <a class="btn btn--primary" href="{{ item.get_absolute_url }}">Открыть карточку товара</a>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <div class="empty-state__visual"></div>
+                                <h2>Товар не найден</h2>
+                                <p>Попробуйте другое название или воспользуйтесь разделами «Ингредиенты» и «Бренды» отдельно.</p>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__visual"></div>
+                    <h2>Начните проверку</h2>
+                    <p>Напишите название товара, ингредиента или бренда — результат появится здесь.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <aside class="panel">
+            <div class="panel__head"><h2>Разделы</h2></div>
+            <div class="filter-list">
+                <a class="chip active" href="{% url 'catalog:product_list' %}">Товары</a>
+                <a class="chip" href="{% url 'catalog:ingredient_list' %}">Ингредиенты</a>
+                <a class="chip" href="{% url 'catalog:brand_list' %}">Бренды</a>
+                <a class="chip" href="{% url 'catalog:boycott_list' %}">Бойкот</a>
+                <a class="chip" href="{% url 'catalog:ocr_upload' %}">Проверка по фото</a>
+            </div>
+        </aside>
+    </section>
+</section>
+<script>
+    (function () {
+        const tabs = document.querySelectorAll("[data-home-mode]");
+        const panels = document.querySelectorAll("[data-home-panel]");
+        const jumpBtn = document.querySelector("[data-home-mode-jump='product']");
+        const fileInput = document.getElementById("id_image");
+        const fileButton = document.getElementById("photoPickButton");
+        const status = document.querySelector(".scanner-flow__status");
+
+        function activate(mode) {
+            tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.homeMode === mode));
+            panels.forEach((panel) => panel.classList.toggle("active", panel.dataset.homePanel === mode));
+        }
+
+        tabs.forEach((tab) => {
+            tab.addEventListener("click", () => activate(tab.dataset.homeMode));
+        });
+
+        if (jumpBtn) {
+            jumpBtn.addEventListener("click", () => activate("product"));
+        }
+
+        if (fileInput) {
+            fileInput.style.display = "none";
+            if (fileButton) {
+                fileButton.addEventListener("click", () => fileInput.click());
+            }
+            fileInput.addEventListener("change", () => {
+                const fileName = fileInput.files && fileInput.files.length ? fileInput.files[0].name : "Фото ещё не выбрано";
+                if (status) status.textContent = fileName;
+            });
+        }
+    })();
+</script>
+{% endblock %}

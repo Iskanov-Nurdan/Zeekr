@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}История | Zeekr{% endblock %}
+{% block body_section %}cabinet{% endblock %}
+{% block eyebrow %}История проверок{% endblock %}
+{% block page_heading %}Все ваши запросы и результаты{% endblock %}
+{% block content %}
+<section class="page active">
+    <div class="panel">
+        <div class="panel__head"><h2>История</h2></div>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Запрос</th>
+                        <th>Тип</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                        <tr>
+                            <td data-label="Запрос">{{ entry.query }}</td>
+                            <td data-label="Тип">{{ entry.get_check_type_display }}</td>
+                            <td data-label="Статус">{{ entry.get_result_status_display }}</td>
+                            <td data-label="Дата">{{ entry.created_at }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">История пока пуста.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

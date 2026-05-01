@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ object.name }} | Zeekr{% endblock %}
+{% block body_section %}brands{% endblock %}
+{% block eyebrow %}Карточка бренда{% endblock %}
+{% block page_heading %}Проверка бренда и его товаров{% endblock %}
+{% block content %}
+<section class="page active">
+    <div class="panel">
+        <div class="result-card">
+            <div class="result-top">
+                <div class="product-thumb">◇</div>
+                <div>
+                    <h2>{{ object.name }}</h2>
+                    <p>{{ object.country|default:"Страна не указана" }}</p>
+                </div>
+                <span class="badge {% if object.boycott_status == 'active' %}badge--danger{% else %}badge--halal{% endif %}">
+                    {{ object.get_boycott_status_display }}
+                </span>
+            </div>
+            <p class="verdict-note {% if object.boycott_status == 'active' %}verdict-note--haram{% else %}verdict-note--halal{% endif %}">
+                {{ object.boycott_reason|default:"Причина boycott-статуса не указана." }}
+            </p>
+            <div class="panel"><h2>Описание</h2><p>{{ object.description|default:"Описание пока не заполнено." }}</p></div>
+            <div class="panel"><h2>Категории</h2><p>{{ object.categories|default:"Категории не указаны." }}</p></div>
+            <a class="btn btn--secondary" href="{% url 'catalog:favorite_toggle' 'brand' object.slug %}">В избранное</a>
+        </div>
+    </div>
+    <div class="panel" style="margin-top:16px;">
+        <div class="panel__head"><h2>Товары бренда</h2></div>
+        <div class="activity-list">
+            {% for product in object.products.all %}
+                <a class="activity-item" href="{{ product.get_absolute_url }}">
+                    <strong>{{ product.name }}</strong>
+                    <span>{{ product.get_halal_status_display }}</span>
+                </a>
+            {% empty %}
+                <div class="empty-state">
+                    <div class="empty-state__visual"></div>
+                    <p>У бренда пока нет связанных товаров.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+

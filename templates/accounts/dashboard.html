@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Кабинет | Zeekr{% endblock %}
+{% block body_section %}cabinet{% endblock %}
+{% block eyebrow %}Личный кабинет{% endblock %}
+{% block page_heading %}Ваши проверки, избранное и настройки{% endblock %}
+{% block content %}
+<section class="page active" id="cabinet">
+    <section class="page-intro page-intro--compact">
+        <p class="eyebrow">Личный кабинет</p>
+        <h2>Ваши проверки, избранное и настройки</h2>
+        <p>Здесь собирается то, к чему обычно хочется вернуться: спорные товары, отправленные жалобы и персональные настройки.</p>
+    </section>
+
+    <div class="cabinet-grid">
+        <div class="panel">
+            <div class="panel__head"><h2>Недавние проверки</h2></div>
+            <div class="activity-list">
+                {% for entry in history_entries %}
+                    <div class="activity-item">
+                        <div>
+                            <strong>{{ entry.query }}</strong>
+                            <span>{{ entry.get_check_type_display }}</span>
+                        </div>
+                        <span>{{ entry.get_result_status_display }}</span>
+                    </div>
+                {% empty %}
+                    <div class="empty-state"><div class="empty-state__visual"></div><p>История пока пуста.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel__head"><h2>Сохраненное</h2></div>
+            <div class="activity-list">
+                {% for item in favorite_items %}
+                    {% if item.target %}
+                        <a class="activity-item" href="{{ item.target.get_absolute_url }}">
+                            <strong>{{ item.target }}</strong>
+                            <span>Избранное</span>
+                        </a>
+                    {% endif %}
+                {% empty %}
+                    <div class="empty-state"><div class="empty-state__visual"></div><p>Избранного пока нет.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="panel settings-panel">
+            <h2>Профиль и регион</h2>
+            <form method="post" class="stack-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="btn btn--primary" type="submit">Сохранить профиль</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

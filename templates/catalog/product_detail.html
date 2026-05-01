@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ object.name }} | Zeekr{% endblock %}
+{% block body_section %}productDetail{% endblock %}
+{% block eyebrow %}Карточка товара{% endblock %}
+{% block page_heading %}Подробная проверка товара{% endblock %}
+{% block content %}
+<section class="page active" id="productDetail">
+    <div class="detail-page">
+        <a class="btn btn--secondary btn--sm" href="{% url 'catalog:product_list' %}">Назад к товарам</a>
+        <div class="panel" style="margin-top:16px;">
+            <div class="result-card">
+                <div class="result-top">
+                    <div class="product-thumb">{{ object.name|slice:":1"|upper }}</div>
+                    <div>
+                        <h2>{{ object.name }}</h2>
+                        <p>{% if object.brand %}{{ object.brand.name }}{% endif %}{% if object.country %} · {{ object.country }}{% endif %}</p>
+                    </div>
+                    <span class="badge {% if object.halal_status == 'halal' %}badge--halal{% elif object.halal_status == 'haram' %}badge--haram{% else %}badge--doubtful{% endif %}">
+                        {{ object.get_halal_status_display }}
+                    </span>
+                </div>
+                <p class="verdict-note {% if object.halal_status == 'halal' %}verdict-note--halal{% elif object.halal_status == 'haram' %}verdict-note--haram{% else %}verdict-note--doubtful{% endif %}">
+                    {{ object.status_reason|default:"Пояснение по статусу пока не сформировано." }}
+                </p>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span>Уверенность</span>
+                        <strong>{{ object.confidence_score }}%</strong>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Источник</span>
+                        <strong>{{ object.source_name|default:"Zeekr" }}</strong>
+                    </div>
+                    <div class="analysis-item">
+                        <span>Штрихкод</span>
+                        <strong>{{ object.barcode|default:"Нет" }}</strong>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel__head"><h2>Состав</h2></div>
+                    <p>{{ object.full_ingredients_text|default:"Полный состав пока не загружен." }}</p>
+                </div>
+                <div class="hero-grid">
+                    <div class="panel">
+                        <div class="panel__head"><h2>Проверенные ингредиенты</h2></div>
+                        <div class="ingredient-list">
+                            {% for row in object.product_ingredients.all %}
+                                <div class="ingredient-row">
+                                    <div>
+                                        <strong>{{ row.raw_name|default:row.ingredient.name }}</strong>
+                                        <span>{{ row.notes }}</span>
+                                    </div>
+                                    <span class="badge {% if row.status_at_analysis == 'halal' %}badge--halal{% elif row.status_at_analysis == 'haram' %}badge--haram{% else %}badge--doubtful{% endif %}">
+                                        {{ row.get_status_at_analysis_display }}
+                                    </span>
+                                </div>
+                            {% empty %}
+                                <div class="empty-state">
+                                    <div class="empty-state__visual"></div>
+                                    <p>Ингредиенты ещё не связаны с карточкой.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <aside class="panel">
+                        <div class="panel__head"><h2>Действия</h2></div>
+                        <div class="filter-list">
+                            <a class="btn btn--primary" href="{% url 'catalog:product_analyze' object.slug %}">Переанализировать</a>
+                            <a class="btn btn--secondary" href="{% url 'catalog:favorite_toggle' 'product' object.slug %}">В избранное</a>
+                        </div>
+                        <div class="panel" style="margin-top:16px;">
+                            <div class="panel__head"><h2>Альтернативы</h2></div>
+                            <div class="activity-list">
+                                {% for item in alternatives %}
+                                    <a class="activity-item" href="{{ item.get_absolute_url }}">
+                                        <strong>{{ item.name }}</strong>
+                                        <span>{{ item.get_halal_status_display }}</span>
+                                    </a>
+                                {% empty %}
+                                    <p>Альтернативы пока не подобраны.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

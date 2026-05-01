@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ object.name }} | Zeekr{% endblock %}
+{% block body_section %}ingredients{% endblock %}
+{% block eyebrow %}Карточка ингредиента{% endblock %}
+{% block page_heading %}Что это за ингредиент и почему такой статус{% endblock %}
+{% block content %}
+<section class="page active">
+    <div class="panel">
+        <div class="result-card">
+            <div class="result-top">
+                <div class="product-thumb">◌</div>
+                <div>
+                    <h2>{{ object.name }}</h2>
+                    <p>{{ object.category|default:"Категория не указана" }}</p>
+                </div>
+                <span class="badge {% if object.status == 'halal' %}badge--halal{% elif object.status == 'haram' %}badge--haram{% else %}badge--doubtful{% endif %}">
+                    {{ object.get_status_display }}
+                </span>
+            </div>
+            <div class="analysis-grid">
+                <div class="analysis-item">
+                    <span>Происхождение</span>
+                    <strong>{{ object.get_origin_display }}</strong>
+                </div>
+                <div class="analysis-item">
+                    <span>Уверенность</span>
+                    <strong>{{ object.confidence_score }}%</strong>
+                </div>
+                <div class="analysis-item">
+                    <span>Источник</span>
+                    <strong>{{ object.source_name|default:"Zeekr" }}</strong>
+                </div>
+            </div>
+            <div class="panel"><h2>Описание</h2><p>{{ object.description|default:"Описание пока не заполнено." }}</p></div>
+            <div class="panel"><h2>Почему такой статус</h2><p>{{ object.reason|default:"Обоснование пока не добавлено." }}</p></div>
+            <div class="panel"><h2>Риски и применение</h2><p>{{ object.possible_risks|default:"Риски не указаны." }}</p><p>{{ object.typical_usage|default:"Типовое использование не указано." }}</p></div>
+            <a class="btn btn--secondary" href="{% url 'catalog:favorite_toggle' 'ingredient' object.slug %}">В избранное</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

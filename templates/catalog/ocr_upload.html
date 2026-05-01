@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}OCR | Zeekr{% endblock %}
+{% block body_section %}home{% endblock %}
+{% block eyebrow %}OCR распознавание{% endblock %}
+{% block page_heading %}Проверка состава по фото{% endblock %}
+{% block content %}
+<section class="page active">
+    <div class="hero-grid">
+        <section class="panel panel--main">
+            <div class="check-mode active" data-panel="photo">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="upload-zone scanner-flow">
+                        <div class="scanner-flow__top">
+                            <strong>Распознавание состава</strong>
+                        </div>
+                        <div class="scanner-frame">
+                            <div class="scanner-frame__box"></div>
+                            <div class="scanner-frame__line"></div>
+                        </div>
+                        <strong class="scanner-flow__hint">Загрузите фото состава продукта</strong>
+                        <div class="scanner-flow__info">OCR извлечет ингредиенты, а система проверит каждый компонент.</div>
+                        {{ form.image }}
+                    </div>
+                    <div class="analysis-grid search-filter-grid">
+                        <div class="field-stack">{{ form.title.label_tag }}{{ form.title }}</div>
+                        <div class="field-stack">{{ form.country.label_tag }}{{ form.country }}</div>
+                    </div>
+                    <button class="btn btn--primary wide" type="submit">Разобрать состав</button>
+                </form>
+            </div>
+        </section>
+        <aside class="panel stats-panel">
+            <h2>Как это работает</h2>
+            <div class="metric metric--halal"><span>1. OCR</span><strong>Текст</strong></div>
+            <div class="metric metric--doubtful"><span>2. Разбор</span><strong>Ингредиенты</strong></div>
+            <div class="metric metric--haram"><span>3. Итог</span><strong>Статус</strong></div>
+            <p>Если Tesseract не установлен, сервер сохранит запрос, но OCR-текст останется пустым.</p>
+        </aside>
+    </div>
+</section>
+{% endblock %}

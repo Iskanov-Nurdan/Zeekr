@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Жалоба | Zeekr{% endblock %}
+{% block body_section %}reports{% endblock %}
+{% block eyebrow %}Обратная связь{% endblock %}
+{% block page_heading %}Сообщить об ошибке в данных{% endblock %}
+{% block content %}
+<section class="page active" id="reports">
+    <section class="page-intro page-intro--compact">
+        <p class="eyebrow">Жалобы и исправления</p>
+        <h2>Сообщите, если статус, состав или карточка товара неверны</h2>
+        <p>Жалоба попадет в модерацию, а при необходимости к ней можно приложить фото упаковки.</p>
+    </section>
+    <div class="auth-layout">
+        <div class="panel">
+            <form method="post" enctype="multipart/form-data" class="stack-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="btn btn--primary" type="submit">Отправить жалобу</button>
+            </form>
+        </div>
+        <aside class="panel auth-benefits">
+            <h2>Когда это полезно</h2>
+            <div class="permission-list permission-list--stack">
+                <span>Неверный halal-статус</span>
+                <span>Ошибочный состав</span>
+                <span>Нет товара или бренда</span>
+                <span>Нужна повторная проверка</span>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

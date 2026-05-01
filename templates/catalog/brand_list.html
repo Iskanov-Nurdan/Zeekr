@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Бренды | Zeekr{% endblock %}
+{% block body_section %}brands{% endblock %}
+{% block eyebrow %}Проверка брендов{% endblock %}
+{% block page_heading %}Бренды, страны и boycott-статусы{% endblock %}
+{% block content %}
+<section class="page active" id="brands">
+    <div class="panel">
+        <div class="panel__head">
+            <h2>Бренды</h2>
+        </div>
+        <form method="get" class="search-form page-search">
+            <label for="brand-query">Проверить бренд</label>
+            <div class="search-row">
+                <input id="brand-query" type="search" name="query" value="{{ request.GET.query }}" placeholder="Nestle, Coca Cola, Pepsi, McDonald's">
+                <button class="btn btn--primary" type="submit">Проверить</button>
+            </div>
+            <div class="single-filter-wrap field-stack">{{ form.boycott_status.label_tag }}{{ form.boycott_status }}</div>
+        </form>
+        <div class="card-grid">
+            {% for brand in brands %}
+                <a class="brand-card" href="{{ brand.get_absolute_url }}">
+                    <div class="brand-card__top">
+                        <h3>{{ brand.name }}</h3>
+                        <span class="badge {% if brand.boycott_status == 'active' %}badge--danger{% else %}badge--halal{% endif %}">
+                            {{ brand.get_boycott_status_display }}
+                        </span>
+                    </div>
+                    <p>{{ brand.country|default:"Страна не указана" }}</p>
+                    <p>{{ brand.description|default:"Описание бренда пока не добавлено."|truncatechars:120 }}</p>
+                </a>
+            {% empty %}
+                <div class="empty-state card-grid-empty">
+                    <div class="empty-state__visual"></div>
+                    <h2>Бренды не найдены</h2>
+                    <p>Попробуйте другой запрос.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
