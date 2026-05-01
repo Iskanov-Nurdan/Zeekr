@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -180,6 +181,10 @@ class ExternalProductCache(TimeStampedModel):
 
     class Meta:
         ordering = ["-last_synced_at"]
+        indexes = [
+            models.Index(fields=["query", "provider"]),
+            models.Index(fields=["last_synced_at"]),
+        ]
 
 
 class ProductCheckRequest(TimeStampedModel):
@@ -253,6 +258,10 @@ class SearchHistory(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["check_type", "query"]),
+        ]
 
 
 class FavoriteItem(TimeStampedModel):
@@ -263,8 +272,37 @@ class FavoriteItem(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    (models.Q(product__isnull=False) & models.Q(ingredient__isnull=True) & models.Q(brand__isnull=True))
+                    | (models.Q(product__isnull=True) & models.Q(ingredient__isnull=False) & models.Q(brand__isnull=True))
+                    | (models.Q(product__isnull=True) & models.Q(ingredient__isnull=True) & models.Q(brand__isnull=False))
+                ),
+                name="favorite_exactly_one_target",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "product"],
+                condition=models.Q(product__isnull=False),
+                name="unique_favorite_product_per_user",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "ingredient"],
+                condition=models.Q(ingredient__isnull=False),
+                name="unique_favorite_ingredient_per_user",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "brand"],
+                condition=models.Q(brand__isnull=False),
+                name="unique_favorite_brand_per_user",
+            ),
+        ]
 
     @property
     def target(self):
         return self.product or self.ingredient or self.brand
 
+    def clean(self):
+        selected = [bool(self.product_id), bool(self.ingredient_id), bool(self.brand_id)]
+        if sum(selected) != 1:
+            raise ValidationError("Favorite item must point to exactly one target.")

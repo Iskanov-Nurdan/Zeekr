@@ -8,11 +8,12 @@ from django.views.generic import DetailView, ListView
 
 from .constants import CHECK_TYPE_BRAND, CHECK_TYPE_INGREDIENT, CHECK_TYPE_OCR, CHECK_TYPE_PRODUCT, UNKNOWN
 from .forms import BrandSearchForm, IngredientSearchForm, OCRUploadForm, ProductSearchForm
-from .models import Brand, FavoriteItem, Ingredient, Product, ProductCheckRequest, SearchHistory
-from .services import ExternalCatalogService, ProductAnalyzerService
+from .models import Brand, Ingredient, Product, ProductCheckRequest
+from .services import ExternalCatalogService, ProductAnalyzerService, UserActivityService
 
 analyzer_service = ProductAnalyzerService()
 external_catalog_service = ExternalCatalogService()
+activity_service = UserActivityService()
 
 
 class ProductListView(ListView):
@@ -61,7 +62,7 @@ class ProductDetailView(DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         if request.user.is_authenticated:
-            SearchHistory.objects.create(
+            activity_service.record_history(
                 user=request.user,
                 check_type=CHECK_TYPE_PRODUCT,
                 query=self.object.name,
@@ -110,7 +111,7 @@ class IngredientDetailView(DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         if request.user.is_authenticated:
-            SearchHistory.objects.create(
+            activity_service.record_history(
                 user=request.user,
                 check_type=CHECK_TYPE_INGREDIENT,
                 query=self.object.name,
@@ -167,7 +168,7 @@ class BrandDetailView(DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         if request.user.is_authenticated:
-            SearchHistory.objects.create(
+            activity_service.record_history(
                 user=request.user,
                 check_type=CHECK_TYPE_BRAND,
                 query=self.object.name,
@@ -187,7 +188,7 @@ def ocr_upload_view(request):
         ocr_request.save()
         analyzer_service.analyze_ocr_request(ocr_request)
         if request.user.is_authenticated:
-            SearchHistory.objects.create(
+            activity_service.record_history(
                 user=request.user,
                 check_type=CHECK_TYPE_OCR,
                 query=ocr_request.title or f"OCR #{ocr_request.pk}",
@@ -217,10 +218,13 @@ def favorite_toggle_view(request, content_type, slug):
     }
     model_class = model_map[content_type]
     target = get_object_or_404(model_class, slug=slug)
-    lookup = {"user": request.user, content_type: target}
-    favorite, created = FavoriteItem.objects.get_or_create(**lookup)
+    try:
+        created, _favorite = activity_service.toggle_favorite(user=request.user, content_type=content_type, target=target)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return HttpResponseRedirect(request.META.get("HTTP_REFERER", reverse("accounts:favorites")))
+
     if not created:
-        favorite.delete()
         messages.info(request, "Removed from favorites.")
     else:
         messages.success(request, "Added to favorites.")
